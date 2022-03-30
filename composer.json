@@ -1,0 +1,27 @@
+{
+    "name": "carlbennett/php-plextv-api",
+    "description": "A PHP library framework for the Plex.tv API",
+    "type": "library",
+    "homepage": "https://github.com/carlbennett/php-plextv-api",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Carl Bennett",
+            "email": "carl@carlbennett.me"
+        }
+    ],
+    "config": {
+        "vendor-dir": "lib"
+    },
+    "autoload": {
+        "psr-4": {
+            "CarlBennett\\PlexTvAPI\\": "src/"
+        }
+    },
+    "require": {
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-xml": "*",
+        "php-64bit": "^7.3"
+    }
+}
