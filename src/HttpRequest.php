@@ -16,7 +16,7 @@ class HttpRequest
 
     public static int $connect_timeout = 3;
     public static int $max_redirects = 10;
-    public static string $user_agent = 'php-plextv-api/0.1';
+    public static string $user_agent = 'Mozilla/5.0 (X11; Linux; rv:98.0) Gecko/20100101 Firefox/98.0';
 
     private function __construct()
     {
@@ -33,14 +33,13 @@ class HttpRequest
      * @param string $form_mime_type The MIME-type of the $form parameter, sent in the "Content-Type" HTTP request header.
      * @param ?array $form The key-value pairs of form fields as an array, can be empty or null to disable form.
      * @param ?array $extra_headers The key-value pairs of extra HTTP headers, to be merged with initial headers.
-     * @return array An array containing the reply HTTP code, body, and body MIME-type from the server, and elapsed time taken during the request.
+     * @return array An array containing the HTTP reply information.
      */
     public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = array()) : array
     {
         try
         {
             $curl = \curl_init();
-            $elapsed_time = microtime(true); // start time
 
             \curl_setopt($curl, \CURLOPT_CONNECTTIMEOUT, self::$connect_timeout);
             \curl_setopt($curl, \CURLOPT_AUTOREFERER, true);
@@ -50,9 +49,12 @@ class HttpRequest
             \curl_setopt($curl, \CURLOPT_URL, $url);
 
             $init_headers = array(
-                'Accept' => '*/*', // any mime type
-                'Range' => 'bytes=0-104857600', // 0-100 MiB (1024 * 1024 * 100 bytes)
-                'User-Agent' => self::$user_agent,
+                'Accept: application/xml,application/xhtml+xml,text/xml;q=0.9,text/html,text/plain,*/*;q=0.1',
+                'Cache-Control: no-cache',
+                'Connection: close',
+                'Pragma: no-cache',
+                'Range: bytes=0-104857600', // 0-100 MiB (1024 * 1024 * 100 bytes)
+                sprintf('User-Agent: %s', self::$user_agent),
             );
             $headers = array_merge($init_headers, $extra_headers);
 
@@ -76,9 +78,10 @@ class HttpRequest
             \curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
 
             $return = array();
+            $return['sent_headers'] = $headers;
+            $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
             $return['reply'] = \curl_exec($curl);
-            $return['elapsed_time'] = (microtime(true) - $elapsed_time);
-            $return['http_code'] = \curl_getinfo($curl, \CURLINFO_HTTP_CODE);
+            $return['reply_http_code'] = \curl_getinfo($curl, \CURLINFO_RESPONSE_CODE);
             $return['reply_mime_type'] = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE);
 
             return $return;
