@@ -327,10 +327,17 @@ class User implements IMutable, JsonSerializable
 
         try
         {
+            // suppress E_DEPRECATED, see <https://www.php.net/manual/en/xmlreader.xml.php>
+            $e = error_reporting(); error_reporting($e & ~E_DEPRECATED);
+
             $xml = XMLReader::XML($reply['reply'], $charset, \LIBXML_BIGLINES | \LIBXML_COMPACT | \LIBXML_HTML_NOIMPLIED);
+
+            error_reporting($e); // restore error reporting setting
+
             $users = array();
             $current_user = null;
             $servers = null;
+
             while ($xml->read())
             {
                 if ($xml->nodeType === XMLReader::ELEMENT && $xml->name == 'User')
