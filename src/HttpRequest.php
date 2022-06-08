@@ -49,7 +49,6 @@ class HttpRequest
             \curl_setopt($curl, \CURLOPT_URL, $url);
 
             $init_headers = array(
-                'Accept: application/xml,application/xhtml+xml,text/xml;q=0.9,text/html,text/plain,*/*;q=0.1',
                 'Cache-Control: no-cache',
                 'Connection: close',
                 'Pragma: no-cache',
@@ -57,6 +56,11 @@ class HttpRequest
                 sprintf('User-Agent: %s', self::$user_agent),
             );
             $headers = array_merge($init_headers, $extra_headers);
+
+            if (!isset($headers['Accept']))
+            {
+                $headers['Accept'] = 'application/json,text/json;q=0.5,application/xml,application/xhtml+xml,text/xml;q=0.4,text/html,text/plain,*/*;q=0.1';
+            }
 
             if ($form)
             {

@@ -22,6 +22,7 @@
         "ext-curl": "*",
         "ext-json": "*",
         "ext-xml": "*",
-        "php-64bit": "^7.3"
+        "php-64bit": "^7.3",
+        "ramsey/uuid": "^4.2"
     }
 }
