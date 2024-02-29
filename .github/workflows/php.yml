@@ -1,10 +1,10 @@
 # vim: set colorcolumn=:
 name: php-plextv-api
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
+  linter:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -12,8 +12,8 @@ jobs:
       - name: Update apt cache
         run: sudo apt-get update
 
-      - name: Install php 7.4
-        run: sudo apt-get install php7.4-cli
+      - name: Install php 8.1
+        run: sudo apt-get install php8.1-cli
 
       - name: Validate composer.json and composer.lock
         run: composer validate
