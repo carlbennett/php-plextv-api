@@ -2,9 +2,7 @@
 
 namespace CarlBennett\PlexTvAPI;
 
-use \JsonSerializable;
-
-class Server implements JsonSerializable
+class Server implements \JsonSerializable
 {
     private bool $allLibraries;
     private int $id;
@@ -29,9 +27,9 @@ class Server implements JsonSerializable
         $this->serverId = $data['serverId'];
     }
 
-    public function jsonSerialize() : array
+    public function jsonSerialize(): array
     {
-        return array(
+        return [
             'allLibraries' => $this->allLibraries,
             'id' => $this->id,
             'lastSeenAt' => $this->lastSeenAt,
@@ -41,6 +39,6 @@ class Server implements JsonSerializable
             'owned' => $this->owned,
             'pending' => $this->pending,
             'serverId' => $this->serverId,
-        );
+        ];
     }
 }

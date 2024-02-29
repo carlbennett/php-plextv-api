@@ -6,12 +6,11 @@ use \CarlBennett\PlexTvAPI\Exceptions\PlexTvAPIException;
 use \CarlBennett\PlexTvAPI\HttpRequest;
 use \CarlBennett\PlexTvAPI\IMutable;
 use \CarlBennett\PlexTvAPI\Server;
-use \JsonSerializable;
 use \XMLReader;
 
-class User implements IMutable, JsonSerializable
+class User implements IMutable, \JsonSerializable
 {
-    const BASEURL_API_USERS = 'https://plex.tv/api/users';
+    public const BASEURL_API_USERS = 'https://plex.tv/api/users';
 
     private iterable $_internaldata;
 
@@ -53,7 +52,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return void
      */
-    public function allocate() : void
+    public function allocate(): void
     {
         $data = &$this->_internaldata;
         if (empty($data) || !\is_iterable($data))
@@ -86,7 +85,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return void
      */
-    public function commit() : void
+    public function commit(): void
     {
         throw new PlexTvAPIException('this method is not yet implemented');
     }
@@ -96,7 +95,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if allowed, false otherwise.
      */
-    public function getAllowCameraUpload() : bool
+    public function getAllowCameraUpload(): bool
     {
         return $this->allowCameraUpload;
     }
@@ -106,7 +105,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if allowed, false otherwise.
      */
-    public function getAllowChannels() : bool
+    public function getAllowChannels(): bool
     {
         return $this->allowChannels;
     }
@@ -116,7 +115,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if allowed, false otherwise.
      */
-    public function getAllowSubtitleAdmin() : bool
+    public function getAllowSubtitleAdmin(): bool
     {
         return $this->allowSubtitleAdmin;
     }
@@ -126,7 +125,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if allowed, false otherwise.
      */
-    public function getAllowSync() : bool
+    public function getAllowSync(): bool
     {
         return $this->allowSync;
     }
@@ -136,7 +135,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if allowed, false otherwise.
      */
-    public function getAllowTuners() : bool
+    public function getAllowTuners(): bool
     {
         return $this->allowTuners;
     }
@@ -146,7 +145,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string|null The email address of this Plex user, or null if not set.
      */
-    public function getEmail() : ?string
+    public function getEmail(): ?string
     {
         return $this->email;
     }
@@ -156,7 +155,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The filter setting.
      */
-    public function getFilterAll() : string
+    public function getFilterAll(): string
     {
         return $this->filterAll;
     }
@@ -166,7 +165,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The filter setting.
      */
-    public function getFilterMovies() : string
+    public function getFilterMovies(): string
     {
         return $this->filterMovies;
     }
@@ -176,7 +175,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The filter setting.
      */
-    public function getFilterMusic() : string
+    public function getFilterMusic(): string
     {
         return $this->filterMusic;
     }
@@ -186,7 +185,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The filter setting.
      */
-    public function getFilterPhotos() : string
+    public function getFilterPhotos(): string
     {
         return $this->filterPhotos;
     }
@@ -196,7 +195,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The filter setting.
      */
-    public function getFilterTelevision() : string
+    public function getFilterTelevision(): string
     {
         return $this->filterTelevision;
     }
@@ -206,7 +205,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if home user, false otherwise.
      */
-    public function getHome() : bool
+    public function getHome(): bool
     {
         return $this->home;
     }
@@ -216,7 +215,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return int The id of the Plex user.
      */
-    public function getId() : int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -226,7 +225,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if protected, false otherwise.
      */
-    public function getProtected() : bool
+    public function getProtected(): bool
     {
         return $this->protected;
     }
@@ -236,7 +235,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return int|null The playlist id number, or null if none set.
      */
-    public function getRecommendationsPlaylistId() : ?int
+    public function getRecommendationsPlaylistId(): ?int
     {
         return $this->recommendationsPlaylistId;
     }
@@ -246,7 +245,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return bool True if restricted, false otherwise.
      */
-    public function getRestricted() : bool
+    public function getRestricted(): bool
     {
         return $this->restricted;
     }
@@ -256,7 +255,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return array The array of Server objects.
      */
-    public function getServers() : array
+    public function getServers(): array
     {
         return $this->servers;
     }
@@ -266,7 +265,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The url to the user's avatar thumbnail on Plex.
      */
-    public function getThumb() : string
+    public function getThumb(): string
     {
         return $this->thumb;
     }
@@ -276,7 +275,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string The title of this Plex user.
      */
-    public function getTitle() : string
+    public function getTitle(): string
     {
         return $this->title;
     }
@@ -286,7 +285,7 @@ class User implements IMutable, JsonSerializable
      *
      * @return string|null The username of this Plex user, or null if not set.
      */
-    public function getUsername() : ?string
+    public function getUsername(): ?string
     {
         return $this->username;
     }
@@ -298,9 +297,9 @@ class User implements IMutable, JsonSerializable
      * @return array An array of User objects.
      * @throws PlexTvAPIException if the HTTP request fails or the response cannot be parsed.
      */
-    public static function getUsers(string $plex_token) : array
+    public static function getUsers(string $plex_token): array
     {
-        $args = array();
+        $args = [];
         $args['X-Plex-Token'] = $plex_token;
         $args['X-Plex-Language'] = 'en';
         $url = sprintf('%s?%s', self::BASEURL_API_USERS, http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
@@ -315,7 +314,7 @@ class User implements IMutable, JsonSerializable
         if (empty($reply['reply']))
             throw new PlexTvAPIException('empty HTTP response');
 
-        $mime_type_fields = array();
+        $mime_type_fields = [];
         if (preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
             throw new PlexTvAPIException(sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
 
@@ -334,7 +333,7 @@ class User implements IMutable, JsonSerializable
 
             error_reporting($e); // restore error reporting setting
 
-            $users = array();
+            $users = [];
             $current_user = null;
             $servers = null;
 
@@ -342,8 +341,8 @@ class User implements IMutable, JsonSerializable
             {
                 if ($xml->nodeType === XMLReader::ELEMENT && $xml->name == 'User')
                 {
-                    $servers = array();
-                    $current_user = array(
+                    $servers = [];
+                    $current_user = [
                         'allowCameraUpload' => $xml->getAttribute('allowCameraUpload'),
                         'allowChannels' => $xml->getAttribute('allowChannels'),
                         'allowSubtitleAdmin' => $xml->getAttribute('allowSubtitleAdmin'),
@@ -364,11 +363,11 @@ class User implements IMutable, JsonSerializable
                         'thumb' => $xml->getAttribute('thumb'),
                         'title' => $xml->getAttribute('title'),
                         'username' => $xml->getAttribute('username'),
-                    );
+                    ];
                 }
                 else if ($xml->nodeType === XMLReader::ELEMENT && $xml->name == 'Server' && $current_user)
                 {
-                    $servers[] = new Server(array(
+                    $servers[] = new Server([
                         'allLibraries' => $xml->getAttribute('allLibraries'),
                         'id' => $xml->getAttribute('id'),
                         'lastSeenAt' => $xml->getAttribute('lastSeenAt'),
@@ -378,7 +377,7 @@ class User implements IMutable, JsonSerializable
                         'owned' => $xml->getAttribute('owned'),
                         'pending' => $xml->getAttribute('pending'),
                         'serverId' => $xml->getAttribute('serverId'),
-                    ));
+                    ]);
                 }
                 else if ($xml->nodeType === XMLReader::END_ELEMENT && $xml->name == 'User')
                 {
@@ -400,9 +399,9 @@ class User implements IMutable, JsonSerializable
      *
      * @return array The JSON object which represents this Plex user.
      */
-    public function jsonSerialize() : array
+    public function jsonSerialize(): array
     {
-        return array(
+        return [
             'allowCameraUpload' => $this->allowCameraUpload,
             'allowChannels' => $this->allowChannels,
             'allowSubtitleAdmin' => $this->allowSubtitleAdmin,
@@ -423,6 +422,6 @@ class User implements IMutable, JsonSerializable
             'thumb' => $this->thumb,
             'title' => $this->title,
             'username' => $this->username,
-        );
+        ];
     }
 }

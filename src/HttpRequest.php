@@ -2,17 +2,15 @@
 
 namespace CarlBennett\PlexTvAPI;
 
-use \LogicException;
-
 class HttpRequest
 {
-    const METHOD_DELETE = 'DELETE';
-    const METHOD_GET = 'GET';
-    const METHOD_HEAD = 'HEAD';
-    const METHOD_OPTIONS = 'OPTIONS';
-    const METHOD_POST = 'POST';
-    const METHOD_PUT = 'PUT';
-    const METHOD_UPLOAD = 'UPLOAD';
+    public const METHOD_DELETE = 'DELETE';
+    public const METHOD_GET = 'GET';
+    public const METHOD_HEAD = 'HEAD';
+    public const METHOD_OPTIONS = 'OPTIONS';
+    public const METHOD_POST = 'POST';
+    public const METHOD_PUT = 'PUT';
+    public const METHOD_UPLOAD = 'UPLOAD';
 
     public static int $connect_timeout = 3;
     public static int $max_redirects = 10;
@@ -20,7 +18,7 @@ class HttpRequest
 
     private function __construct()
     {
-        throw new LogicException('static class cannot be instantiated');
+        throw new \LogicException('static class cannot be instantiated');
     }
 
     /**
@@ -35,7 +33,7 @@ class HttpRequest
      * @param ?array $extra_headers The key-value pairs of extra HTTP headers, to be merged with initial headers.
      * @return array An array containing the HTTP reply information.
      */
-    public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = array()) : array
+    public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = []): array
     {
         try
         {
@@ -48,14 +46,14 @@ class HttpRequest
             \curl_setopt($curl, \CURLOPT_POSTREDIR, 7); // accepted form-field redirect methods: 7 = 301, 302, 303
             \curl_setopt($curl, \CURLOPT_URL, $url);
 
-            $init_headers = array(
+            $init_headers = [
                 'Cache-Control: no-cache',
                 'Connection: close',
                 'Pragma: no-cache',
                 'Range: bytes=0-104857600', // 0-100 MiB (1024 * 1024 * 100 bytes)
-                sprintf('User-Agent: %s', self::$user_agent),
-            );
-            $headers = array_merge($init_headers, $extra_headers);
+                \sprintf('User-Agent: %s', self::$user_agent),
+            ];
+            $headers = \array_merge($init_headers, $extra_headers);
 
             if (!isset($headers['Accept']))
             {
@@ -66,7 +64,7 @@ class HttpRequest
             {
                 \curl_setopt($curl, \CURLOPT_POST, true);
 
-                if (PHP_VERSION >= 5.5)
+                if (\PHP_VERSION >= 5.5 && \defined('\CURLOPT_SAFE_UPLOAD'))
                 {
                     // disable processing of @ symbol as a filename in CURLOPT_POSTFIELDS.
                     \curl_setopt($curl, \CURLOPT_SAFE_UPLOAD, true);
@@ -81,7 +79,7 @@ class HttpRequest
             \curl_setopt($curl, \CURLOPT_HTTPHEADER, $headers);
             \curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
 
-            $return = array();
+            $return = [];
             $return['sent_headers'] = $headers;
             $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
             $return['reply'] = \curl_exec($curl);

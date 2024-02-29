@@ -3,8 +3,6 @@
 namespace CarlBennett\PlexTvAPI;
 
 use \CarlBennett\PlexTvAPI\Exceptions\PlexTvAPIException;
-use \LogicException;
-use \Ramsey\Uuid\Uuid;
 
 class Auth
 {
@@ -28,9 +26,9 @@ class Auth
      *
      * @return string The v4 UUID.
      */
-    public static function generateClientId() : string
+    public static function generateClientId(): string
     {
-        return Uuid::uuid4()->toString();
+        return \Ramsey\Uuid\Uuid::uuid4()->toString();
     }
 
     /**
@@ -38,36 +36,36 @@ class Auth
      *
      * @return array The PIN id and code from Plex.tv.
      */
-    public static function generatePINCode() : array
+    public static function generatePINCode(): array
     {
-        $args = array();
+        $args = [];
         $args['strong'] = 'true';
         $args['X-Plex-Product'] = self::$app_name;
         $args['X-Plex-Client-Identifier'] = self::$client_id;
-        $url = sprintf('%s?%s', self::PLEXTV_API_GENERATE_PIN, http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
+        $url = \sprintf('%s?%s', self::PLEXTV_API_GENERATE_PIN, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_POST, $url);
 
         if ($reply['reply_http_code'] != 200)
-            throw new PlexTvAPIException(sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
+            throw new PlexTvAPIException(\sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
 
         if (empty($reply['reply']))
             throw new PlexTvAPIException('empty HTTP response');
 
-        $mime_type_fields = array();
-        if (preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
-            throw new PlexTvAPIException(sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
+        $mime_type_fields = [];
+        if (\preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
+            throw new PlexTvAPIException(\sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
 
         $mime_type = $mime_type_fields[1];
         $charset = $mime_type_fields[2] ?? '';
 
-        if (strtolower($mime_type) !== 'application/json')
-            throw new PlexTvAPIException(sprintf('unexpected MIME-type returned: %s', $mime_type));
+        if (\strtolower($mime_type) !== 'application/json')
+            throw new PlexTvAPIException(\sprintf('unexpected MIME-type returned: %s', $mime_type));
 
-        $json = json_decode($reply['reply'], true);
-        $json_errno = json_last_error();
+        $json = \json_decode($reply['reply'], true);
+        $json_errno = \json_last_error();
 
         if ($json_errno !== JSON_ERROR_NONE)
-            throw new PlexTvAPIException(sprintf('unexpected JSON error %d: %s', $json_errno, json_last_error_msg()));
+            throw new PlexTvAPIException(\sprintf('unexpected JSON error %d: %s', $json_errno, \json_last_error_msg()));
 
         return [$json['id'] ?? null, $json['code'] ?? null];
     }
@@ -77,14 +75,14 @@ class Auth
      *
      * @return string The fully qualified url at our host.
      */
-    public static function getForwardUrl() : string
+    public static function getForwardUrl(): string
     {
         return \sprintf(
             '%s://%s%s',
-            getenv('HTTPS') ? 'https' : 'http',
-            getenv('HTTP_HOST') ?? getenv('SERVER_NAME'),
+            \getenv('HTTPS') ? 'https' : 'http',
+            \getenv('HTTP_HOST') ?? \getenv('SERVER_NAME'),
             (
-                substr(self::$forward_url_endpoint, 0, 1) === '/' ?
+                \substr(self::$forward_url_endpoint, 0, 1) === '/' ?
                 self::$forward_url_endpoint : '/' . self::$forward_url_endpoint
             )
         );
@@ -99,7 +97,7 @@ class Auth
      * @param string $app_name The name of our application.
      * @return string The fully qualified url to send the user to for authenticating with Plex.tv.
      */
-    public static function getInteractiveAuthUrl(string $client_id, string $pin_code, string $forward_url, string $app_name) : string
+    public static function getInteractiveAuthUrl(string $client_id, string $pin_code, string $forward_url, string $app_name): string
     {
         return \sprintf(
             '%s?clientID=%s&code=%s&forwardUrl=%s&context%5Bdevice%5D%5Bproduct%5D=%s',
@@ -118,35 +116,35 @@ class Auth
      * @param string $pin_code The pin identification from the user.
      * @return ?string The user's access token.
      */
-    public static function verifyPINCode(string $pin_id, string $pin_code) : ?string
+    public static function verifyPINCode(string $pin_id, string $pin_code): ?string
     {
-        $args = array();
+        $args = [];
         $args['code'] = $pin_code;
         $args['X-Plex-Client-Identifier'] = self::$client_id;
-        $url = sprintf('%s?%s', sprintf(self::PLEXTV_API_CHECK_PIN, $pin_id), http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
+        $url = \sprintf('%s?%s', \sprintf(self::PLEXTV_API_CHECK_PIN, $pin_id), \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
 
         if ($reply['reply_http_code'] != 200)
-            throw new PlexTvAPIException(sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
+            throw new PlexTvAPIException(\sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
 
         if (empty($reply['reply']))
             throw new PlexTvAPIException('empty HTTP response');
 
-        $mime_type_fields = array();
-        if (preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
-            throw new PlexTvAPIException(sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
+        $mime_type_fields = [];
+        if (\preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
+            throw new PlexTvAPIException(\sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
 
         $mime_type = $mime_type_fields[1];
         $charset = $mime_type_fields[2] ?? '';
 
-        if (strtolower($mime_type) !== 'application/json')
-            throw new PlexTvAPIException(sprintf('unexpected MIME-type returned: %s', $mime_type));
+        if (\strtolower($mime_type) !== 'application/json')
+            throw new PlexTvAPIException(\sprintf('unexpected MIME-type returned: %s', $mime_type));
 
-        $json = json_decode($reply['reply'], true);
-        $json_errno = json_last_error();
+        $json = \json_decode($reply['reply'], true);
+        $json_errno = \json_last_error();
 
-        if ($json_errno !== JSON_ERROR_NONE)
-            throw new PlexTvAPIException(sprintf('unexpected JSON error %d: %s', $json_errno, json_last_error_msg()));
+        if ($json_errno !== \JSON_ERROR_NONE)
+            throw new PlexTvAPIException(\sprintf('unexpected JSON error %d: %s', $json_errno, \json_last_error_msg()));
 
         return $json['authToken'] ?? null;
     }
@@ -157,20 +155,20 @@ class Auth
      * @param string $user_access_token The stored access token.
      * @return bool True if access token is valid, false otherwise.
      */
-    public static function verifyUserAccessToken(string $user_access_token) : bool
+    public static function verifyUserAccessToken(string $user_access_token): bool
     {
-        $args = array();
+        $args = [];
         $args['X-Plex-Product'] = self::$app_name;
         $args['X-Plex-Client-Identifier'] = self::$client_id;
         $args['X-Plex-Token'] = $user_access_token;
-        $url = sprintf('%s?%s', self::PLEXTV_API_TOKEN_VALIDITY, http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
+        $url = \sprintf('%s?%s', self::PLEXTV_API_TOKEN_VALIDITY, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
 
         if ($reply['reply_http_code'] == 401)
             return false;
 
         if ($reply['reply_http_code'] != 200)
-            throw new PlexTvAPIException(sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
+            throw new PlexTvAPIException(\sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
 
         return true;
     }

@@ -12,12 +12,12 @@ interface IMutable
      *
      * @return void
      */
-    public function allocate() : void;
+    public function allocate(): void;
 
     /**
      * Call this method to commit the object to storage using its object properties.
      *
      * @return void
      */
-    public function commit() : void;
+    public function commit(): void;
 }
