@@ -35,62 +35,50 @@ class HttpRequest
      */
     public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = []): array
     {
-        try
+        $curl = \curl_init();
+
+        \curl_setopt($curl, \CURLOPT_CONNECTTIMEOUT, self::$connect_timeout);
+        \curl_setopt($curl, \CURLOPT_AUTOREFERER, true);
+        \curl_setopt($curl, \CURLOPT_FOLLOWLOCATION, true);
+        \curl_setopt($curl, \CURLOPT_MAXREDIRS, self::$max_redirects);
+        \curl_setopt($curl, \CURLOPT_POSTREDIR, 7); // accepted form-field redirect methods: 7 = 301, 302, 303
+        \curl_setopt($curl, \CURLOPT_URL, $url);
+
+        $init_headers = [
+            'Accept: application/json,text/json;q=0.5,application/xml,application/xhtml+xml,text/xml;q=0.4,text/html,text/plain,*/*;q=0.1',
+            'Cache-Control: no-cache',
+            'Connection: close',
+            'Pragma: no-cache',
+            'Range: bytes=0-104857600', // 0-100 MiB (1024 * 1024 * 100 bytes)
+            \sprintf('User-Agent: %s', self::$user_agent),
+        ];
+        $headers = \array_merge($init_headers, $extra_headers);
+
+        if ($form)
         {
-            $curl = \curl_init();
+            \curl_setopt($curl, \CURLOPT_POST, true);
 
-            \curl_setopt($curl, \CURLOPT_CONNECTTIMEOUT, self::$connect_timeout);
-            \curl_setopt($curl, \CURLOPT_AUTOREFERER, true);
-            \curl_setopt($curl, \CURLOPT_FOLLOWLOCATION, true);
-            \curl_setopt($curl, \CURLOPT_MAXREDIRS, self::$max_redirects);
-            \curl_setopt($curl, \CURLOPT_POSTREDIR, 7); // accepted form-field redirect methods: 7 = 301, 302, 303
-            \curl_setopt($curl, \CURLOPT_URL, $url);
-
-            $init_headers = [
-                'Cache-Control: no-cache',
-                'Connection: close',
-                'Pragma: no-cache',
-                'Range: bytes=0-104857600', // 0-100 MiB (1024 * 1024 * 100 bytes)
-                \sprintf('User-Agent: %s', self::$user_agent),
-            ];
-            $headers = \array_merge($init_headers, $extra_headers);
-
-            if (!isset($headers['Accept']))
+            if (\defined('\CURLOPT_SAFE_UPLOAD'))
             {
-                $headers['Accept'] = 'application/json,text/json;q=0.5,application/xml,application/xhtml+xml,text/xml;q=0.4,text/html,text/plain,*/*;q=0.1';
+                // disable processing of @ symbol as a filename in CURLOPT_POSTFIELDS.
+                \curl_setopt($curl, \CURLOPT_SAFE_UPLOAD, true);
             }
 
-            if ($form)
-            {
-                \curl_setopt($curl, \CURLOPT_POST, true);
+            \curl_setopt($curl, \CURLOPT_POSTFIELDS, $form);
 
-                if (\PHP_VERSION >= 5.5 && \defined('\CURLOPT_SAFE_UPLOAD'))
-                {
-                    // disable processing of @ symbol as a filename in CURLOPT_POSTFIELDS.
-                    \curl_setopt($curl, \CURLOPT_SAFE_UPLOAD, true);
-                }
-
-                \curl_setopt($curl, \CURLOPT_POSTFIELDS, $form);
-
-                $headers['Content-Type'] = $form_mime_type;
-                if (!$headers['Content-Type']) $headers['Content-Type'] = 'application/x-www-form-urlencoded';
-            }
-
-            \curl_setopt($curl, \CURLOPT_HTTPHEADER, $headers);
-            \curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
-
-            $return = [];
-            $return['sent_headers'] = $headers;
-            $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
-            $return['reply'] = \curl_exec($curl);
-            $return['reply_http_code'] = \curl_getinfo($curl, \CURLINFO_RESPONSE_CODE);
-            $return['reply_mime_type'] = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE);
-
-            return $return;
+            $headers[] = 'Content-Type: ' . (empty($form_mime_type) ? 'application/x-www-form-urlencoded' : $form_mime_type);
         }
-        finally
-        {
-            \curl_close($curl);
-        }
+
+        \curl_setopt($curl, \CURLOPT_HTTPHEADER, $headers);
+        \curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
+
+        $return = [];
+        $return['sent_headers'] = $headers;
+        $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
+        $return['reply'] = \curl_exec($curl);
+        $return['reply_http_code'] = \curl_getinfo($curl, \CURLINFO_RESPONSE_CODE);
+        $return['reply_mime_type'] = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE);
+
+        return $return;
     }
 }
