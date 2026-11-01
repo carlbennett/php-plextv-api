@@ -130,11 +130,15 @@ class Auth
      * Verifies a PIN code returned from the user and gets the user access token. This connects to the Plex.tv API.
      *
      * @param string $pin_id The pin identification from storage.
-     * @param string $pin_code The pin identification from the user.
-     * @return ?string The user's access token.
+     * @param string $pin_code The PIN code from Auth::generatePINCode().
+     * @return ?string The user's access token, or null if the user has not signed in yet.
+     * @throws PlexTvAPIException if the PIN id is not numeric, or the request fails.
      */
     public static function verifyPINCode(string $pin_id, string $pin_code): ?string
     {
+        if (!\ctype_digit($pin_id))
+            throw new PlexTvAPIException(\sprintf('PIN id must be numeric, got: %s', $pin_id));
+
         $args = [];
         $args['code'] = $pin_code;
         $args['X-Plex-Client-Identifier'] = self::clientId();

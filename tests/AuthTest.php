@@ -148,4 +148,28 @@ class AuthTest extends TestCase
         $this->expectExceptionMessage('unexpected HTTP response code: 500');
         Auth::verifyUserAccessToken('secret-token');
     }
+
+    public static function pinTokenProvider(): array
+    {
+        return [
+            'signed in' => ['{"id":1234,"code":"abcd","authToken":"user-token"}', 'user-token'],
+            'not signed in yet' => ['{"id":1234,"code":"abcd","authToken":null}', null],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('pinTokenProvider')]
+    public function testVerifyPINCode(string $body, ?string $expected): void
+    {
+        $this->transport->queue(200, 'application/json', $body);
+
+        $this->assertSame($expected, Auth::verifyPINCode('1234', 'abcd'));
+        $this->assertStringStartsWith('https://plex.tv/api/v2/pins/1234?code=abcd&', $this->transport->lastRequest()['url']);
+    }
+
+    public function testVerifyPINCodeRejectsNonNumericId(): void
+    {
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('PIN id must be numeric');
+        Auth::verifyPINCode('../user', 'abcd');
+    }
 }
