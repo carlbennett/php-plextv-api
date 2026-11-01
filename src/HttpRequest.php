@@ -78,9 +78,18 @@ class HttpRequest
                 \curl_setopt($curl, \CURLOPT_SAFE_UPLOAD, true);
             }
 
-            \curl_setopt($curl, \CURLOPT_POSTFIELDS, $form);
+            $form_mime_type = empty($form_mime_type) ? 'application/x-www-form-urlencoded' : $form_mime_type;
 
-            $headers[] = 'Content-Type: ' . (empty($form_mime_type) ? 'application/x-www-form-urlencoded' : $form_mime_type);
+            if (\stripos($form_mime_type, 'multipart/form-data') === 0)
+            {
+                // curl encodes an array as multipart and sets the Content-Type header with its boundary itself.
+                \curl_setopt($curl, \CURLOPT_POSTFIELDS, $form);
+            }
+            else
+            {
+                \curl_setopt($curl, \CURLOPT_POSTFIELDS, \http_build_query($form, '', '&'));
+                $headers[] = 'Content-Type: ' . $form_mime_type;
+            }
         }
 
         \curl_setopt($curl, \CURLOPT_HTTPHEADER, $headers);

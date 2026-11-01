@@ -68,6 +68,24 @@ class HttpRequestTest extends TestCase
         $this->assertSame('', $reply['reply']);
     }
 
+    public function testFormIsSentUrlEncodedByDefault(): void
+    {
+        $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_POST, self::$server->url('/echo'), '', ['a' => '1', 'b' => 'x y']));
+
+        $this->assertSame('POST', $echo['method']);
+        $this->assertSame('application/x-www-form-urlencoded', $echo['headers']['Content-Type']);
+        $this->assertSame('a=1&b=x+y', $echo['body']);
+        $this->assertSame(['a' => '1', 'b' => 'x y'], $echo['post']);
+    }
+
+    public function testFormIsSentAsMultipartWhenRequested(): void
+    {
+        $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_POST, self::$server->url('/echo'), 'multipart/form-data', ['a' => '1']));
+
+        $this->assertStringStartsWith('multipart/form-data; boundary=', $echo['headers']['Content-Type']);
+        $this->assertSame(['a' => '1'], $echo['post']);
+    }
+
     public function testExtraHeadersAreSent(): void
     {
         $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/echo'), '', null, ['X-Test: yes']));

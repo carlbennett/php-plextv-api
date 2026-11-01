@@ -28,6 +28,7 @@ switch ($path)
             'query' => $_GET,
             'headers' => \getallheaders(),
             'body' => \file_get_contents('php://input'),
+            'post' => $_POST,
         ]);
         return true;
 }
