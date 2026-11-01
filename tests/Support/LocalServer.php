@@ -18,7 +18,9 @@ class LocalServer
         {
             $port = \random_int(20000, 60000);
             $command = [\PHP_BINARY, '-S', \sprintf('127.0.0.1:%d', $port), $router];
-            $this->process = \proc_open($command, [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
+            // several workers, so a deliberately slow request does not block the tests that follow it
+            $env = \getenv() + ['PHP_CLI_SERVER_WORKERS' => '4'];
+            $this->process = \proc_open($command, [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, null, $env);
 
             for ($wait = 0; $wait < 50; ++$wait)
             {

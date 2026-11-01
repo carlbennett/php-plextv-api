@@ -24,6 +24,7 @@ class HttpRequestTest extends TestCase
     protected function tearDown(): void
     {
         FakeTransport::uninstall();
+        HttpRequest::$timeout = 30;
     }
 
     private function echo(array $reply): array
@@ -108,6 +109,17 @@ class HttpRequestTest extends TestCase
         $this->assertFalse($reply['reply']);
         $this->assertSame(0, $reply['reply_http_code']);
         $this->assertNotSame('', $reply['error']);
+    }
+
+    public function testSlowReplyTimesOut(): void
+    {
+        HttpRequest::$timeout = 1;
+        $started = \microtime(true);
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/slow'));
+
+        $this->assertFalse($reply['reply']);
+        $this->assertStringContainsStringIgnoringCase('timed out', $reply['error']);
+        $this->assertLessThan(4, \microtime(true) - $started);
     }
 
     public function testHandlerReplacesTransport(): void
