@@ -47,6 +47,36 @@ jobs:
       - name: Validate PHP syntax
         run: bash -c 'set -e;for file in $(find ./src ./tests -type f -regex ".*\.\(php\|phtml\)" -print); do php -e -l -f "$file"; done'
 
+  phpstan:
+    needs: [linter]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Install PHP 8.5
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: curl, mbstring, xml, xmlreader
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: lib
+          key: ${{ runner.os }}-php8.5-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php8.5-
+
+      - name: Install composer/vendor dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run PHPStan
+        run: lib/bin/phpstan analyse --no-progress --error-format=github
+
   tests:
     name: tests (PHP ${{ matrix.php }})
     needs: [linter]

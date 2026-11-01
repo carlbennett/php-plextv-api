@@ -3,7 +3,6 @@
 namespace CarlBennett\PlexTvAPI\Tests;
 
 use \CarlBennett\PlexTvAPI\Exceptions\PlexTvAPIException;
-use \CarlBennett\PlexTvAPI\Server;
 use \CarlBennett\PlexTvAPI\Tests\Support\FakeTransport;
 use \CarlBennett\PlexTvAPI\User;
 use \PHPUnit\Framework\TestCase;
@@ -24,7 +23,11 @@ class UserTest extends TestCase
 
     private static function fixture(string $name): string
     {
-        return \file_get_contents(__DIR__ . '/fixtures/' . $name);
+        $contents = \file_get_contents(__DIR__ . '/fixtures/' . $name);
+        if ($contents === false)
+            throw new \RuntimeException(\sprintf('cannot read fixture %s', $name));
+
+        return $contents;
     }
 
     public function testGetUsersParsesUsersAndServers(): void
@@ -43,7 +46,7 @@ class UserTest extends TestCase
         $this->assertFalse($alice->getAllowTuners());
         $this->assertNull($alice->getRecommendationsPlaylistId());
         $this->assertCount(2, $alice->getServers());
-        $this->assertContainsOnlyInstancesOf(Server::class, $alice->getServers());
+        $this->assertSame('Office', $alice->getServers()[1]->jsonSerialize()['name']);
 
         $this->assertSame(1002, $bob->getId());
         $this->assertNull($bob->getEmail());
@@ -67,7 +70,7 @@ class UserTest extends TestCase
     public function testJsonSerializeIncludesServers(): void
     {
         $this->transport->queue(200, 'application/xml; charset=utf-8', self::fixture('users.xml'));
-        $json = \json_decode(\json_encode(User::getUsers('secret-token')[0]), true);
+        $json = \json_decode(\json_encode(User::getUsers('secret-token')[0], \JSON_THROW_ON_ERROR), true);
 
         $this->assertSame(1001, $json['id']);
         $this->assertSame('Living Room', $json['servers'][0]['name']);
@@ -111,6 +114,9 @@ class UserTest extends TestCase
         $this->assertSame([], $users[2]->getServers());
     }
 
+    /**
+     * @return array<string, array{string, string, string}>
+     */
     public static function brokenAttributeProvider(): array
     {
         return [
@@ -125,6 +131,7 @@ class UserTest extends TestCase
     {
         $xml = self::fixture('users.xml');
         $broken = \preg_replace('/' . \preg_quote($search, '/') . '/', $replace, $xml, 1);
+        $this->assertIsString($broken);
         $this->assertNotSame($xml, $broken);
         $this->transport->queue(200, 'application/xml', $broken);
 
