@@ -315,7 +315,8 @@ class User implements IMutable, \JsonSerializable
 
         try
         {
-            if (!$xml->XML($reply['reply'], $charset, \LIBXML_BIGLINES | \LIBXML_COMPACT))
+            // an empty encoding is invalid; null lets libxml use the XML declaration or its default
+            if (!$xml->XML($reply['reply'], $charset !== '' ? $charset : null, \LIBXML_BIGLINES | \LIBXML_COMPACT))
                 throw new PlexTvAPIException('cannot parse XML response');
 
             $users = [];

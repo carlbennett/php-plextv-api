@@ -93,4 +93,10 @@ class UserTest extends TestCase
         $this->expectExceptionMessage('access unauthorized');
         User::getUsers('secret-token');
     }
+
+    public function testGetUsersWithoutCharsetInContentType(): void
+    {
+        $this->transport->queue(200, 'application/xml', self::fixture('users.xml'));
+        $this->assertCount(2, User::getUsers('secret-token'));
+    }
 }
