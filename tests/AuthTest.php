@@ -91,4 +91,37 @@ class AuthTest extends TestCase
         $this->expectException(PlexTvAPIException::class);
         Auth::getForwardUrl();
     }
+
+    public static function pinReplyCodeProvider(): array
+    {
+        return ['200 OK' => [200], '201 Created' => [201]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('pinReplyCodeProvider')]
+    public function testGeneratePINCodePostsAndReturnsIdAndCode(int $code): void
+    {
+        $this->transport->queue($code, 'application/json; charset=utf-8', '{"id":1234,"code":"abcd"}');
+
+        $this->assertSame([1234, 'abcd'], Auth::generatePINCode());
+        $request = $this->transport->lastRequest();
+        $this->assertSame('POST', $request['method']);
+        $this->assertStringStartsWith('https://plex.tv/api/v2/pins?', $request['url']);
+        $this->assertStringContainsString('X-Plex-Client-Identifier=test-client-id', $request['url']);
+    }
+
+    public function testGeneratePINCodeWithoutCodeThrows(): void
+    {
+        $this->transport->queue(201, 'application/json', '{"id":1234}');
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('missing its id or code');
+        Auth::generatePINCode();
+    }
+
+    public function testGeneratePINCodeWithInvalidJsonThrows(): void
+    {
+        $this->transport->queue(201, 'application/json', '{"id":');
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('unexpected JSON error');
+        Auth::generatePINCode();
+    }
 }

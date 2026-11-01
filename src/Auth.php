@@ -55,6 +55,7 @@ class Auth
      * Requests a PIN code from the Plex.tv API. This connects to the Plex.tv API.
      *
      * @return array The PIN id and code from Plex.tv.
+     * @throws PlexTvAPIException if the request fails or the reply is not a PIN.
      */
     public static function generatePINCode(): array
     {
@@ -65,15 +66,18 @@ class Auth
         $url = \sprintf('%s?%s', self::PLEXTV_API_GENERATE_PIN, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_POST, $url);
 
-        HttpRequest::expectReply($reply, 'application/json');
+        HttpRequest::expectReply($reply, 'application/json', [200, 201]); // Plex replies 201 Created
 
         $json = \json_decode($reply['reply'], true);
         $json_errno = \json_last_error();
 
-        if ($json_errno !== JSON_ERROR_NONE)
+        if ($json_errno !== \JSON_ERROR_NONE)
             throw new PlexTvAPIException(\sprintf('unexpected JSON error %d: %s', $json_errno, \json_last_error_msg()));
 
-        return [$json['id'] ?? null, $json['code'] ?? null];
+        if (!isset($json['id'], $json['code']))
+            throw new PlexTvAPIException('PIN reply is missing its id or code');
+
+        return [$json['id'], $json['code']];
     }
 
     /**
