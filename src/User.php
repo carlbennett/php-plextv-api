@@ -12,6 +12,7 @@ class User implements IMutable, \JsonSerializable
 {
     public const BASEURL_API_USERS = 'https://plex.tv/api/users';
 
+    /** @var array<string, mixed> */
     private array $_internaldata;
 
     private bool $allowCameraUpload;
@@ -30,6 +31,7 @@ class User implements IMutable, \JsonSerializable
     private bool $protected;
     private ?int $recommendationsPlaylistId;
     private bool $restricted;
+    /** @var list<Server> */
     private array $servers;
     private string $thumb;
     private string $title;
@@ -38,8 +40,8 @@ class User implements IMutable, \JsonSerializable
     /**
      * Constructs a Plex user object from serialized Plex user information.
      *
-     * @param array $data The serialized data containing the Plex user object properties.
-     * @throws PlexTvAPIException if $data is empty.
+     * @param array<string, mixed> $data The serialized data containing the Plex user object properties.
+     * @throws PlexTvAPIException if $data is empty, or a required attribute is missing or invalid.
      */
     public function __construct(array $data)
     {
@@ -58,26 +60,27 @@ class User implements IMutable, \JsonSerializable
         if (empty($data))
             throw new PlexTvAPIException('empty array cannot be deserialized into object');
 
-        $this->allowCameraUpload = $data['allowCameraUpload'] ? true : false;
-        $this->allowChannels = $data['allowChannels'] ? true : false;
-        $this->allowSubtitleAdmin = $data['allowSubtitleAdmin'] ? true : false;
-        $this->allowSync = $data['allowSync'] ? true : false;
-        $this->allowTuners = $data['allowTuners'] ? true : false;
-        $this->email = empty($data['email']) ? null : $data['email'];
-        $this->filterAll = $data['filterAll'];
-        $this->filterMovies = $data['filterMovies'];
-        $this->filterMusic = $data['filterMusic'];
-        $this->filterPhotos = $data['filterPhotos'];
-        $this->filterTelevision = $data['filterTelevision'];
-        $this->home = $data['home'] ? true : false;
-        $this->id = $data['id'];
-        $this->protected = $data['protected'] ? true : false;
-        $this->recommendationsPlaylistId = empty($data['recommendationsPlaylistId']) ? null : $data['recommendationsPlaylistId'];
-        $this->restricted = $data['restricted'] ? true : false;
-        $this->servers = $data['servers'];
-        $this->thumb = $data['thumb'];
-        $this->title = $data['title'];
-        $this->username = empty($data['username']) ? null : $data['username'];
+        $attributes = new Attributes($data, 'User');
+        $this->allowCameraUpload = $attributes->bool('allowCameraUpload');
+        $this->allowChannels = $attributes->bool('allowChannels');
+        $this->allowSubtitleAdmin = $attributes->bool('allowSubtitleAdmin');
+        $this->allowSync = $attributes->bool('allowSync');
+        $this->allowTuners = $attributes->bool('allowTuners');
+        $this->email = $attributes->nullableString('email');
+        $this->filterAll = $attributes->string('filterAll');
+        $this->filterMovies = $attributes->string('filterMovies');
+        $this->filterMusic = $attributes->string('filterMusic');
+        $this->filterPhotos = $attributes->string('filterPhotos');
+        $this->filterTelevision = $attributes->string('filterTelevision');
+        $this->home = $attributes->bool('home');
+        $this->id = $attributes->int('id');
+        $this->protected = $attributes->bool('protected');
+        $this->recommendationsPlaylistId = $attributes->nullableInt('recommendationsPlaylistId');
+        $this->restricted = $attributes->bool('restricted');
+        $this->servers = \array_values(\array_filter((array) ($data['servers'] ?? []), fn ($server) => $server instanceof Server));
+        $this->thumb = $attributes->string('thumb');
+        $this->title = $attributes->string('title');
+        $this->username = $attributes->nullableString('username');
     }
 
     /**
@@ -253,7 +256,7 @@ class User implements IMutable, \JsonSerializable
     /**
      * Gets the servers that this user has been added to.
      *
-     * @return array The array of Server objects.
+     * @return list<Server> The array of Server objects.
      */
     public function getServers(): array
     {
@@ -294,7 +297,7 @@ class User implements IMutable, \JsonSerializable
      * Call this static method to retrieve users and sharing information from the Plex API.
      *
      * @param string $plex_token The Plex authentication token.
-     * @return array An array of User objects.
+     * @return list<User> An array of User objects.
      * @throws PlexTvAPIException if the HTTP request fails or the response cannot be parsed.
      */
     public static function getUsers(string $plex_token): array
@@ -397,7 +400,7 @@ class User implements IMutable, \JsonSerializable
     /**
      * Serializes this object into JSON format. This is part of the PHP-native JsonSerializable interface.
      *
-     * @return array The JSON object which represents this Plex user.
+     * @return array<string, mixed> The JSON object which represents this Plex user.
      */
     public function jsonSerialize(): array
     {

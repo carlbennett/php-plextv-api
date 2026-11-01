@@ -110,4 +110,26 @@ class UserTest extends TestCase
         $this->assertCount(1, $users[1]->getServers(), 'a Server outside any User must not be attached to the previous user');
         $this->assertSame([], $users[2]->getServers());
     }
+
+    public static function brokenAttributeProvider(): array
+    {
+        return [
+            'Server missing lastSeenAt' => ['lastSeenAt="1767225600" ', '', 'Server is missing its lastSeenAt attribute'],
+            'Server with non-numeric id' => ['id="2001" ', 'id="abc" ', 'Server has a non-numeric id attribute'],
+            'User missing title' => ['title="Alice" ', '', 'User is missing its title attribute'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('brokenAttributeProvider')]
+    public function testGetUsersWithBrokenAttributeThrows(string $search, string $replace, string $message): void
+    {
+        $xml = self::fixture('users.xml');
+        $broken = \preg_replace('/' . \preg_quote($search, '/') . '/', $replace, $xml, 1);
+        $this->assertNotSame($xml, $broken);
+        $this->transport->queue(200, 'application/xml', $broken);
+
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage($message);
+        User::getUsers('secret-token');
+    }
 }
