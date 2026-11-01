@@ -14,6 +14,7 @@ class HttpRequest
 
     public static int $connect_timeout = 3;
     public static int $max_redirects = 10;
+    public static string $redirect_protocols = 'https'; // comma-separated, see CURLOPT_REDIR_PROTOCOLS_STR
     public static int $timeout = 30; // seconds for the whole transfer, including connecting and redirects
     public static string $user_agent = 'Mozilla/5.0 (X11; Linux; rv:98.0) Gecko/20100101 Firefox/98.0';
 
@@ -49,9 +50,9 @@ class HttpRequest
 
         \curl_setopt($curl, \CURLOPT_CONNECTTIMEOUT, self::$connect_timeout);
         \curl_setopt($curl, \CURLOPT_TIMEOUT, self::$timeout);
-        \curl_setopt($curl, \CURLOPT_AUTOREFERER, true);
         \curl_setopt($curl, \CURLOPT_FOLLOWLOCATION, true);
         \curl_setopt($curl, \CURLOPT_MAXREDIRS, self::$max_redirects);
+        \curl_setopt($curl, \CURLOPT_REDIR_PROTOCOLS_STR, self::$redirect_protocols);
         \curl_setopt($curl, \CURLOPT_POSTREDIR, 7); // accepted form-field redirect methods: 7 = 301, 302, 303
         \curl_setopt($curl, \CURLOPT_URL, $url);
 

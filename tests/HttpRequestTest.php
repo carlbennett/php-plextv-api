@@ -21,8 +21,14 @@ class HttpRequestTest extends TestCase
         self::$server->stop();
     }
 
+    protected function setUp(): void
+    {
+        HttpRequest::$redirect_protocols = 'http,https'; // the local test server only speaks http
+    }
+
     protected function tearDown(): void
     {
+        HttpRequest::$redirect_protocols = 'https';
         FakeTransport::uninstall();
         HttpRequest::$timeout = 30;
     }
@@ -100,6 +106,21 @@ class HttpRequestTest extends TestCase
         $this->assertSame(['redirected' => '1'], $this->echo($reply)['query']);
         $this->assertSame(self::$server->url('/echo?redirected=1'), $reply['url']);
         $this->assertSame('', $reply['error']);
+    }
+
+    public function testRedirectDoesNotSendReferer(): void
+    {
+        $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/redirect?X-Plex-Token=secret')));
+        $this->assertArrayNotHasKey('Referer', $echo['headers']);
+    }
+
+    public function testRedirectToPlainHttpIsRefusedByDefault(): void
+    {
+        HttpRequest::$redirect_protocols = 'https';
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/redirect'));
+
+        $this->assertFalse($reply['reply']);
+        $this->assertStringContainsStringIgnoringCase('protocol', $reply['error']);
     }
 
     public function testTransportFailureReportsCurlError(): void
