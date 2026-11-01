@@ -308,21 +308,7 @@ class User implements IMutable, \JsonSerializable
         if ($reply['reply_http_code'] == 401)
             throw new PlexTvAPIException('access unauthorized, check plex token');
 
-        if ($reply['reply_http_code'] != 200)
-            throw new PlexTvAPIException(sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
-
-        if (empty($reply['reply']))
-            throw new PlexTvAPIException('empty HTTP response');
-
-        $mime_type_fields = [];
-        if (preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
-            throw new PlexTvAPIException(sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
-
-        $mime_type = $mime_type_fields[1];
-        $charset = $mime_type_fields[2] ?? '';
-
-        if (strtolower($mime_type) !== 'application/xml')
-            throw new PlexTvAPIException(sprintf('unexpected MIME-type returned: %s', $mime_type));
+        $charset = HttpRequest::expectReply($reply, 'application/xml');
 
         try
         {

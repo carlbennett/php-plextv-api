@@ -2,6 +2,8 @@
 
 namespace CarlBennett\PlexTvAPI;
 
+use \CarlBennett\PlexTvAPI\Exceptions\PlexTvAPIException;
+
 class HttpRequest
 {
     public const METHOD_DELETE = 'DELETE';
@@ -113,5 +115,43 @@ class HttpRequest
         $return['reply_mime_type'] = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE);
 
         return $return;
+    }
+
+    /**
+     * Checks that a reply from execute() succeeded with a non-empty body of the expected MIME-type.
+     *
+     * @param array $reply The array returned by execute().
+     * @param string $mime_type The expected MIME-type, such as "application/json".
+     * @param array $http_codes The HTTP response codes that count as success.
+     * @return string The charset given in the Content-Type header, or an empty string if none.
+     * @throws PlexTvAPIException if the request failed or the reply is not what was expected.
+     */
+    public static function expectReply(array $reply, string $mime_type, array $http_codes = [200]): string
+    {
+        if ($reply['reply'] === false)
+            throw new PlexTvAPIException(\sprintf('HTTP request failed: %s', $reply['error'] ?? 'unknown error'));
+
+        if (!\in_array($reply['reply_http_code'], $http_codes, true))
+            throw new PlexTvAPIException(\sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
+
+        if (empty($reply['reply']))
+            throw new PlexTvAPIException('empty HTTP response');
+
+        $params = \explode(';', (string) $reply['reply_mime_type']);
+        $reply_mime_type = \strtolower(\trim(\array_shift($params)));
+        if ($reply_mime_type === '')
+            throw new PlexTvAPIException('HTTP response has no Content-Type');
+
+        if ($reply_mime_type !== \strtolower($mime_type))
+            throw new PlexTvAPIException(\sprintf('unexpected MIME-type returned: %s', $reply_mime_type));
+
+        foreach ($params as $param)
+        {
+            [$key, $value] = \array_pad(\explode('=', $param, 2), 2, '');
+            if (\strtolower(\trim($key)) === 'charset')
+                return \trim(\trim($value), '"');
+        }
+
+        return '';
     }
 }
