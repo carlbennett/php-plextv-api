@@ -74,6 +74,24 @@ class HttpRequestTest extends TestCase
         $this->assertSame('yes', $echo['headers']['X-Test']);
     }
 
+    public function testUrlIsTheEffectiveUrlAfterRedirects(): void
+    {
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/redirect'));
+
+        $this->assertSame(['redirected' => '1'], $this->echo($reply)['query']);
+        $this->assertSame(self::$server->url('/echo?redirected=1'), $reply['url']);
+        $this->assertSame('', $reply['error']);
+    }
+
+    public function testTransportFailureReportsCurlError(): void
+    {
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, 'http://127.0.0.1:1/');
+
+        $this->assertFalse($reply['reply']);
+        $this->assertSame(0, $reply['reply_http_code']);
+        $this->assertNotSame('', $reply['error']);
+    }
+
     public function testHandlerReplacesTransport(): void
     {
         $transport = FakeTransport::install()->queue(204);

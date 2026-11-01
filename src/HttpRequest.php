@@ -88,8 +88,9 @@ class HttpRequest
 
         $return = [];
         $return['sent_headers'] = $headers;
-        $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
         $return['reply'] = \curl_exec($curl);
+        $return['error'] = $return['reply'] === false ? \curl_error($curl) : '';
+        $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
         $return['reply_http_code'] = \curl_getinfo($curl, \CURLINFO_RESPONSE_CODE);
         $return['reply_mime_type'] = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE);
 
