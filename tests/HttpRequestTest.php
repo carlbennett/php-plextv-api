@@ -143,6 +143,30 @@ class HttpRequestTest extends TestCase
         $this->assertLessThan(4, \microtime(true) - $started);
     }
 
+    public static function injectedHeaderProvider(): array
+    {
+        return [
+            'CRLF' => ["X-Test: a\r\nX-Injected: b"],
+            'LF' => ["X-Test: a\nX-Injected: b"],
+            'NUL' => ["X-Test: a\0b"],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('injectedHeaderProvider')]
+    public function testHeaderInjectionIsRejected(string $header): void
+    {
+        FakeTransport::install();
+        $this->expectException(\InvalidArgumentException::class);
+        HttpRequest::execute(HttpRequest::METHOD_GET, 'https://plex.invalid/', '', null, [$header]);
+    }
+
+    public function testFormMimeTypeInjectionIsRejected(): void
+    {
+        FakeTransport::install();
+        $this->expectException(\InvalidArgumentException::class);
+        HttpRequest::execute(HttpRequest::METHOD_POST, 'https://plex.invalid/', "text/plain\r\nX-Injected: b", ['a' => '1']);
+    }
+
     public function testHandlerReplacesTransport(): void
     {
         $transport = FakeTransport::install()->queue(204);

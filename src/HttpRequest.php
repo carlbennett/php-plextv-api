@@ -40,9 +40,16 @@ class HttpRequest
      * @param ?array $form The key-value pairs of form fields as an array, can be empty or null to disable form.
      * @param ?array $extra_headers The key-value pairs of extra HTTP headers, to be merged with initial headers.
      * @return array An array containing the HTTP reply information.
+     * @throws \InvalidArgumentException if a header value contains CR, LF, or NUL characters.
      */
     public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = []): array
     {
+        foreach (\array_merge([$form_mime_type, self::$user_agent], $extra_headers) as $value)
+        {
+            if (\strpbrk($value, "\r\n\0") !== false)
+                throw new \InvalidArgumentException('HTTP header values must not contain CR, LF, or NUL characters');
+        }
+
         if (self::$handler !== null)
             return (self::$handler)($method, $url, $form_mime_type, $form, $extra_headers);
 
