@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaContainer friendlyName="myPlex" identifier="com.plexapp.plugins.myplex" machineIdentifier="0123456789abcdef" totalSize="3" size="3">
+  <User id="1001" title="Alice" username="alice" email="alice@example.com" recommendationsPlaylistId="" thumb="https://plex.tv/users/1001/avatar" protected="0" home="0" allowTuners="0" allowSync="0" allowCameraUpload="0" allowChannels="0" allowSubtitleAdmin="0" filterAll="" filterMovies="" filterMusic="" filterPhotos="" filterTelevision="" restricted="0"/>
+  <User id="1002" title="Bob" username="bob" email="bob@example.com" recommendationsPlaylistId="" thumb="https://plex.tv/users/1002/avatar" protected="0" home="0" allowTuners="0" allowSync="0" allowCameraUpload="0" allowChannels="0" allowSubtitleAdmin="0" filterAll="" filterMovies="" filterMusic="" filterPhotos="" filterTelevision="" restricted="0">
+    <Server id="2001" serverId="3001" machineIdentifier="fedcba9876543210" name="Living Room" lastSeenAt="1767225600" numLibraries="3" allLibraries="1" owned="1" pending="0"/>
+  </User>
+  <Server id="2009" serverId="3009" machineIdentifier="ffffffffffffffff" name="Stray" lastSeenAt="1767225600" numLibraries="1" allLibraries="1" owned="0" pending="0"/>
+  <User id="1003" title="Carol" username="carol" email="carol@example.com" recommendationsPlaylistId="" thumb="https://plex.tv/users/1003/avatar" protected="0" home="0" allowTuners="0" allowSync="0" allowCameraUpload="0" allowChannels="0" allowSubtitleAdmin="0" filterAll="" filterMovies="" filterMusic="" filterPhotos="" filterTelevision="" restricted="0"/>
+</MediaContainer>

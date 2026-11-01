@@ -300,38 +300,24 @@ class User implements IMutable, \JsonSerializable
     public static function getUsers(string $plex_token): array
     {
         $args = [];
-        $args['X-Plex-Token'] = $plex_token;
         $args['X-Plex-Language'] = 'en';
-        $url = sprintf('%s?%s', self::BASEURL_API_USERS, http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
-        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
+        $url = \sprintf('%s?%s', self::BASEURL_API_USERS, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url, '', null, ['X-Plex-Token: ' . $plex_token]);
 
         if ($reply['reply_http_code'] == 401)
             throw new PlexTvAPIException('access unauthorized, check plex token');
 
-        if ($reply['reply_http_code'] != 200)
-            throw new PlexTvAPIException(sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));
+        $charset = HttpRequest::expectReply($reply, 'application/xml');
 
-        if (empty($reply['reply']))
-            throw new PlexTvAPIException('empty HTTP response');
-
-        $mime_type_fields = [];
-        if (preg_match('/^(\b[A-Za-z0-9\+\-\/]+\b)(?:;\s*charset=(\b[A-Za-z0-9\-]+\b))?$/i', $reply['reply_mime_type'], $mime_type_fields) !== 1)
-            throw new PlexTvAPIException(sprintf('cannot parse Content-Type header returned: %s', $reply['reply_mime_type']));
-
-        $mime_type = $mime_type_fields[1];
-        $charset = $mime_type_fields[2] ?? '';
-
-        if (strtolower($mime_type) !== 'application/xml')
-            throw new PlexTvAPIException(sprintf('unexpected MIME-type returned: %s', $mime_type));
+        $xml = new XMLReader();
+        $use_errors = \libxml_use_internal_errors(true);
+        \libxml_clear_errors();
 
         try
         {
-            // suppress E_DEPRECATED, see <https://www.php.net/manual/en/xmlreader.xml.php>
-            $e = error_reporting(); error_reporting($e & ~E_DEPRECATED);
-
-            $xml = XMLReader::XML($reply['reply'], $charset, \LIBXML_BIGLINES | \LIBXML_COMPACT | \LIBXML_HTML_NOIMPLIED);
-
-            error_reporting($e); // restore error reporting setting
+            // an empty encoding is invalid; null lets libxml use the XML declaration or its default
+            if (!$xml->XML($reply['reply'], $charset !== '' ? $charset : null, \LIBXML_BIGLINES | \LIBXML_COMPACT))
+                throw new PlexTvAPIException('cannot parse XML response');
 
             $users = [];
             $current_user = null;
@@ -364,6 +350,13 @@ class User implements IMutable, \JsonSerializable
                         'title' => $xml->getAttribute('title'),
                         'username' => $xml->getAttribute('username'),
                     ];
+
+                    if ($xml->isEmptyElement)
+                    {
+                        // <User .../> has no servers, and XMLReader emits no END_ELEMENT for it
+                        $users[] = new self($current_user);
+                        $current_user = null;
+                    }
                 }
                 else if ($xml->nodeType === XMLReader::ELEMENT && $xml->name == 'Server' && $current_user)
                 {
@@ -383,15 +376,22 @@ class User implements IMutable, \JsonSerializable
                 {
                     $current_user['servers'] = $servers;
                     $users[] = new self($current_user);
+                    $current_user = null;
                 }
             }
+
+            $error = \libxml_get_last_error();
+            if ($error !== false)
+                throw new PlexTvAPIException(\sprintf('malformed XML response: %s', \trim($error->message)));
         }
         finally
         {
-            if ($xml instanceof XMLReader) $xml->close();
-
-            return $users;
+            $xml->close();
+            \libxml_clear_errors();
+            \libxml_use_internal_errors($use_errors);
         }
+
+        return $users;
     }
 
     /**
