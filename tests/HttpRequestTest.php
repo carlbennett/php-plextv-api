@@ -43,6 +43,31 @@ class HttpRequestTest extends TestCase
         $this->assertSame('application/json; charset=utf-8', $reply['reply_mime_type']);
     }
 
+    public static function methodProvider(): array
+    {
+        return [
+            'DELETE' => [HttpRequest::METHOD_DELETE],
+            'GET' => [HttpRequest::METHOD_GET],
+            'OPTIONS' => [HttpRequest::METHOD_OPTIONS],
+            'POST' => [HttpRequest::METHOD_POST],
+            'PUT' => [HttpRequest::METHOD_PUT],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('methodProvider')]
+    public function testRequestMethodIsSentWithoutForm(string $method): void
+    {
+        $echo = $this->echo(HttpRequest::execute($method, self::$server->url('/echo')));
+        $this->assertSame($method, $echo['method']);
+    }
+
+    public function testHeadRequestReturnsNoBody(): void
+    {
+        $reply = HttpRequest::execute(HttpRequest::METHOD_HEAD, self::$server->url('/echo'));
+        $this->assertSame(200, $reply['reply_http_code']);
+        $this->assertSame('', $reply['reply']);
+    }
+
     public function testExtraHeadersAreSent(): void
     {
         $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/echo'), '', null, ['X-Test: yes']));

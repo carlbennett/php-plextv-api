@@ -53,6 +53,11 @@ class HttpRequest
         \curl_setopt($curl, \CURLOPT_POSTREDIR, 7); // accepted form-field redirect methods: 7 = 301, 302, 303
         \curl_setopt($curl, \CURLOPT_URL, $url);
 
+        if ($method === self::METHOD_HEAD)
+            \curl_setopt($curl, \CURLOPT_NOBODY, true);
+        else
+            \curl_setopt($curl, \CURLOPT_CUSTOMREQUEST, $method);
+
         $init_headers = [
             'Accept: application/json,text/json;q=0.5,application/xml,application/xhtml+xml,text/xml;q=0.4,text/html,text/plain,*/*;q=0.1',
             'Cache-Control: no-cache',
