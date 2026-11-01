@@ -41,4 +41,16 @@ class AuthTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, $b);
         $this->assertNotSame($a, $b);
     }
+
+    public function testGetInteractiveAuthUrl(): void
+    {
+        $url = Auth::getInteractiveAuthUrl('client id', 'ABCD', 'https://example.com/plex/auth?a=1&b=2', 'My App');
+
+        $this->assertSame(
+            'https://app.plex.tv/auth#?clientID=client%20id&code=ABCD'
+            . '&forwardUrl=https%3A%2F%2Fexample.com%2Fplex%2Fauth%3Fa%3D1%26b%3D2'
+            . '&context%5Bdevice%5D%5Bproduct%5D=My%20App',
+            $url
+        );
+    }
 }

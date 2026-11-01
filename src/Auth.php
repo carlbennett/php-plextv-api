@@ -92,21 +92,20 @@ class Auth
      * Generate an interactive authentication url to send to an end user. Initiates the first step to getting a user access token.
      *
      * @param string $client_id The client identification generated and stored by us.
-     * @param string $pin_code The pin identification.
+     * @param string $pin_code The PIN code from Auth::generatePINCode().
      * @param string $forward_url The fully qualified url endpoint to return the user to.
      * @param string $app_name The name of our application.
      * @return string The fully qualified url to send the user to for authenticating with Plex.tv.
      */
     public static function getInteractiveAuthUrl(string $client_id, string $pin_code, string $forward_url, string $app_name): string
     {
-        return \sprintf(
-            '%s?clientID=%s&code=%s&forwardUrl=%s&context%5Bdevice%5D%5Bproduct%5D=%s',
-            self::PLEXTV_API_INTERACTIVE_AUTH,
-            \rawurlencode($client_id),
-            \rawurlencode($pin_code),
-            \rawurlencode($forward_url),
-            \rawurlencode($app_name)
-        );
+        $args = [
+            'clientID' => $client_id,
+            'code' => $pin_code,
+            'forwardUrl' => $forward_url,
+            'context' => ['device' => ['product' => $app_name]],
+        ];
+        return \sprintf('%s?%s', self::PLEXTV_API_INTERACTIVE_AUTH, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
     }
 
     /**
