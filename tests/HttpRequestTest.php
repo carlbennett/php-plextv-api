@@ -7,6 +7,9 @@ use \CarlBennett\PlexTvAPI\Tests\Support\FakeTransport;
 use \CarlBennett\PlexTvAPI\Tests\Support\LocalServer;
 use \PHPUnit\Framework\TestCase;
 
+/**
+ * @phpstan-import-type Reply from HttpRequest
+ */
 class HttpRequestTest extends TestCase
 {
     private static LocalServer $server;
@@ -33,6 +36,10 @@ class HttpRequestTest extends TestCase
         HttpRequest::$timeout = 30;
     }
 
+    /**
+     * @param Reply $reply
+     * @return array<string, mixed> The request as the test server saw it.
+     */
     private function echo(array $reply): array
     {
         $this->assertSame(200, $reply['reply_http_code']);
@@ -50,6 +57,9 @@ class HttpRequestTest extends TestCase
         $this->assertSame('application/json; charset=utf-8', $reply['reply_mime_type']);
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
     public static function methodProvider(): array
     {
         return [
@@ -137,6 +147,7 @@ class HttpRequestTest extends TestCase
 
         $this->assertFalse($reply['reply']);
         $this->assertSame(0, $reply['reply_http_code']);
+        $this->assertNull($reply['reply_mime_type']);
         $this->assertNotSame('', $reply['error']);
     }
 
@@ -151,6 +162,9 @@ class HttpRequestTest extends TestCase
         $this->assertLessThan(4, \microtime(true) - $started);
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
     public static function injectedHeaderProvider(): array
     {
         return [
@@ -173,6 +187,12 @@ class HttpRequestTest extends TestCase
         FakeTransport::install();
         $this->expectException(\InvalidArgumentException::class);
         HttpRequest::execute(HttpRequest::METHOD_POST, 'https://plex.invalid/', "text/plain\r\nX-Injected: b", ['a' => '1']);
+    }
+
+    public function testEmptyMethodIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        HttpRequest::execute('', 'https://plex.invalid/');
     }
 
     public function testHandlerReplacesTransport(): void

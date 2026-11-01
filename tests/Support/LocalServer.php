@@ -7,7 +7,8 @@ namespace CarlBennett\PlexTvAPI\Tests\Support;
  */
 class LocalServer
 {
-    private $process;
+    /** @var resource|false|null */
+    private $process = null;
     public readonly string $base_url;
 
     public function __construct()
@@ -21,6 +22,7 @@ class LocalServer
             // several workers, so a deliberately slow request does not block the tests that follow it
             $env = \getenv() + ['PHP_CLI_SERVER_WORKERS' => '4'];
             $this->process = \proc_open($command, [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, null, $env);
+            if ($this->process === false) continue;
 
             for ($wait = 0; $wait < 50; ++$wait)
             {

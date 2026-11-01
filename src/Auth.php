@@ -54,7 +54,7 @@ class Auth
     /**
      * Requests a PIN code from the Plex.tv API. This connects to the Plex.tv API.
      *
-     * @return array The PIN id and code from Plex.tv.
+     * @return array{int, string} The PIN id and code from Plex.tv.
      * @throws PlexTvAPIException if the request fails or the reply is not a PIN.
      */
     public static function generatePINCode(): array
@@ -74,7 +74,7 @@ class Auth
         if ($json_errno !== \JSON_ERROR_NONE)
             throw new PlexTvAPIException(\sprintf('unexpected JSON error %d: %s', $json_errno, \json_last_error_msg()));
 
-        if (!isset($json['id'], $json['code']))
+        if (!\is_array($json) || !\is_int($json['id'] ?? null) || !\is_string($json['code'] ?? null))
             throw new PlexTvAPIException('PIN reply is missing its id or code');
 
         return [$json['id'], $json['code']];
@@ -153,7 +153,8 @@ class Auth
         if ($json_errno !== \JSON_ERROR_NONE)
             throw new PlexTvAPIException(\sprintf('unexpected JSON error %d: %s', $json_errno, \json_last_error_msg()));
 
-        return $json['authToken'] ?? null;
+        $token = \is_array($json) ? ($json['authToken'] ?? null) : null;
+        return \is_string($token) ? $token : null;
     }
 
     /**
@@ -171,7 +172,7 @@ class Auth
         $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url, '', null, ['X-Plex-Token: ' . $user_access_token]);
 
         if ($reply['reply'] === false)
-            throw new PlexTvAPIException(\sprintf('HTTP request failed: %s', $reply['error'] ?? 'unknown error'));
+            throw new PlexTvAPIException(\sprintf('HTTP request failed: %s', $reply['error'] !== '' ? $reply['error'] : 'unknown error'));
 
         if ($reply['reply_http_code'] == 401)
             return false;

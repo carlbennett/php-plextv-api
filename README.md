@@ -45,4 +45,8 @@ not trust the client-supplied `Host` header.
 ```sh
 composer install
 lib/bin/phpunit --testdox
+lib/bin/phpstan analyse
 ```
+
+CI runs the linter and tests on every supported PHP version (8.3 to 8.5), and
+PHPStan at level 8, which checks the code against PHP 8.3.

@@ -14,19 +14,27 @@ class Server implements \JsonSerializable
     private bool $pending;
     private int $serverId;
 
+    /**
+     * @param array<string, ?string> $data The attributes of a Server element from the Plex.tv users API.
+     * @throws Exceptions\PlexTvAPIException if a required attribute is missing or invalid.
+     */
     public function __construct(array $data)
     {
-        $this->allLibraries = $data['allLibraries'] ? true : false;
-        $this->id = $data['id'];
-        $this->lastSeenAt = $data['lastSeenAt'];
-        $this->machineIdentifier = $data['machineIdentifier'];
-        $this->name = $data['name'];
-        $this->numLibraries = $data['numLibraries'];
-        $this->owned = $data['owned'] ? true : false;
-        $this->pending = $data['pending'] ? true : false;
-        $this->serverId = $data['serverId'];
+        $attributes = new Attributes($data, 'Server');
+        $this->allLibraries = $attributes->bool('allLibraries');
+        $this->id = $attributes->int('id');
+        $this->lastSeenAt = $attributes->int('lastSeenAt');
+        $this->machineIdentifier = $attributes->string('machineIdentifier');
+        $this->name = $attributes->string('name');
+        $this->numLibraries = $attributes->int('numLibraries');
+        $this->owned = $attributes->bool('owned');
+        $this->pending = $attributes->bool('pending');
+        $this->serverId = $attributes->int('serverId');
     }
 
+    /**
+     * @return array<string, bool|int|string>
+     */
     public function jsonSerialize(): array
     {
         return [

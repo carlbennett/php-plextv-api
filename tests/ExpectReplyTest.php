@@ -7,13 +7,29 @@ use \CarlBennett\PlexTvAPI\HttpRequest;
 use \PHPUnit\Framework\Attributes\DataProvider;
 use \PHPUnit\Framework\TestCase;
 
+/**
+ * @phpstan-import-type Reply from HttpRequest
+ */
 class ExpectReplyTest extends TestCase
 {
+    /**
+     * @return Reply
+     */
     private static function reply(int $code, ?string $mime_type, string|false $body = '{}', string $error = ''): array
     {
-        return ['error' => $error, 'reply' => $body, 'reply_http_code' => $code, 'reply_mime_type' => $mime_type];
+        return [
+            'sent_headers' => [],
+            'reply' => $body,
+            'error' => $error,
+            'url' => 'https://plex.invalid/',
+            'reply_http_code' => $code,
+            'reply_mime_type' => $mime_type,
+        ];
     }
 
+    /**
+     * @return array<string, array{string, string}>
+     */
     public static function charsetProvider(): array
     {
         return [
@@ -35,6 +51,9 @@ class ExpectReplyTest extends TestCase
         $this->assertSame('', HttpRequest::expectReply(self::reply(201, 'application/json'), 'application/json', [200, 201]));
     }
 
+    /**
+     * @return array<string, array{Reply, string}>
+     */
     public static function badReplyProvider(): array
     {
         return [
@@ -46,6 +65,9 @@ class ExpectReplyTest extends TestCase
         ];
     }
 
+    /**
+     * @param Reply $reply
+     */
     #[DataProvider('badReplyProvider')]
     public function testRejectsBadReplies(array $reply, string $message): void
     {
