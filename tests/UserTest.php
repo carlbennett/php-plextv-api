@@ -75,4 +75,22 @@ class UserTest extends TestCase
         $this->assertTrue($json['servers'][0]['owned']);
         $this->assertTrue($json['servers'][1]['pending']);
     }
+
+    public function testGetUsersWithTruncatedXmlThrows(): void
+    {
+        $xml = self::fixture('users.xml');
+        $this->transport->queue(200, 'application/xml; charset=utf-8', \substr($xml, 0, (int) (\strlen($xml) / 2)));
+
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('malformed XML response');
+        User::getUsers('secret-token');
+    }
+
+    public function testGetUsersUnauthorizedThrows(): void
+    {
+        $this->transport->queue(401, 'text/html', 'Unauthorized');
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('access unauthorized');
+        User::getUsers('secret-token');
+    }
 }

@@ -309,14 +309,14 @@ class User implements IMutable, \JsonSerializable
 
         $charset = HttpRequest::expectReply($reply, 'application/xml');
 
+        $xml = new XMLReader();
+        $use_errors = \libxml_use_internal_errors(true);
+        \libxml_clear_errors();
+
         try
         {
-            // suppress E_DEPRECATED, see <https://www.php.net/manual/en/xmlreader.xml.php>
-            $e = error_reporting(); error_reporting($e & ~E_DEPRECATED);
-
-            $xml = XMLReader::XML($reply['reply'], $charset, \LIBXML_BIGLINES | \LIBXML_COMPACT | \LIBXML_HTML_NOIMPLIED);
-
-            error_reporting($e); // restore error reporting setting
+            if (!$xml->XML($reply['reply'], $charset, \LIBXML_BIGLINES | \LIBXML_COMPACT))
+                throw new PlexTvAPIException('cannot parse XML response');
 
             $users = [];
             $current_user = null;
@@ -370,13 +370,19 @@ class User implements IMutable, \JsonSerializable
                     $users[] = new self($current_user);
                 }
             }
+
+            $error = \libxml_get_last_error();
+            if ($error !== false)
+                throw new PlexTvAPIException(\sprintf('malformed XML response: %s', \trim($error->message)));
         }
         finally
         {
-            if ($xml instanceof XMLReader) $xml->close();
-
-            return $users;
+            $xml->close();
+            \libxml_clear_errors();
+            \libxml_use_internal_errors($use_errors);
         }
+
+        return $users;
     }
 
     /**
