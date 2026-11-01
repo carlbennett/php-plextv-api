@@ -16,6 +16,12 @@ class HttpRequest
     public static int $max_redirects = 10;
     public static string $user_agent = 'Mozilla/5.0 (X11; Linux; rv:98.0) Gecko/20100101 Firefox/98.0';
 
+    /**
+     * Replaces the curl transport when set. It receives the same arguments as execute() and must return the same
+     * array shape. Intended for tests; leave null in production.
+     */
+    public static ?\Closure $handler = null;
+
     private function __construct()
     {
         throw new \LogicException('static class cannot be instantiated');
@@ -35,6 +41,9 @@ class HttpRequest
      */
     public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = []): array
     {
+        if (self::$handler !== null)
+            return (self::$handler)($method, $url, $form_mime_type, $form, $extra_headers);
+
         $curl = \curl_init();
 
         \curl_setopt($curl, \CURLOPT_CONNECTTIMEOUT, self::$connect_timeout);
