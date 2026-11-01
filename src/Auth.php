@@ -11,11 +11,25 @@ class Auth
     const PLEXTV_API_GENERATE_PIN = 'https://plex.tv/api/v2/pins';
     const PLEXTV_API_CHECK_PIN = 'https://plex.tv/api/v2/pins/%d';
 
-    public static string $client_id;
+    public static ?string $client_id = null;
     public static string $app_name = 'php-plextv-api';
     public static string $forward_url_endpoint = '/plex/auth';
 
     private function __construct() {}
+
+    /**
+     * Gets the client identifier, which must be set before any request is made to Plex.tv.
+     *
+     * @return string The value of Auth::$client_id.
+     * @throws PlexTvAPIException if Auth::$client_id is not set.
+     */
+    private static function clientId(): string
+    {
+        if (self::$client_id === null || self::$client_id === '')
+            throw new PlexTvAPIException('Auth::$client_id must be set before making requests, see Auth::generateClientId()');
+
+        return self::$client_id;
+    }
 
     /**
      * Generates a random v4 UUID string for client identification.
@@ -41,7 +55,7 @@ class Auth
         $args = [];
         $args['strong'] = 'true';
         $args['X-Plex-Product'] = self::$app_name;
-        $args['X-Plex-Client-Identifier'] = self::$client_id;
+        $args['X-Plex-Client-Identifier'] = self::clientId();
         $url = \sprintf('%s?%s', self::PLEXTV_API_GENERATE_PIN, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_POST, $url);
 
@@ -106,7 +120,7 @@ class Auth
     {
         $args = [];
         $args['code'] = $pin_code;
-        $args['X-Plex-Client-Identifier'] = self::$client_id;
+        $args['X-Plex-Client-Identifier'] = self::clientId();
         $url = \sprintf('%s?%s', \sprintf(self::PLEXTV_API_CHECK_PIN, $pin_id), \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
 
@@ -131,7 +145,7 @@ class Auth
     {
         $args = [];
         $args['X-Plex-Product'] = self::$app_name;
-        $args['X-Plex-Client-Identifier'] = self::$client_id;
+        $args['X-Plex-Client-Identifier'] = self::clientId();
         $args['X-Plex-Token'] = $user_access_token;
         $url = \sprintf('%s?%s', self::PLEXTV_API_TOKEN_VALIDITY, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
         $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
