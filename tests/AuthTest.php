@@ -124,4 +124,28 @@ class AuthTest extends TestCase
         $this->expectExceptionMessage('unexpected JSON error');
         Auth::generatePINCode();
     }
+
+    public static function tokenReplyProvider(): array
+    {
+        return ['valid' => [200, true], 'invalid' => [401, false]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('tokenReplyProvider')]
+    public function testVerifyUserAccessToken(int $code, bool $expected): void
+    {
+        $this->transport->queue($code, 'application/json', '{}');
+
+        $this->assertSame($expected, Auth::verifyUserAccessToken('secret-token'));
+        $request = $this->transport->lastRequest();
+        $this->assertStringNotContainsString('secret-token', $request['url']);
+        $this->assertContains('X-Plex-Token: secret-token', $request['headers']);
+    }
+
+    public function testVerifyUserAccessTokenUnexpectedCodeThrows(): void
+    {
+        $this->transport->queue(500, 'application/json', '{}');
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('unexpected HTTP response code: 500');
+        Auth::verifyUserAccessToken('secret-token');
+    }
 }

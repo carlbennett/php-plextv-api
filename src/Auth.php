@@ -163,9 +163,8 @@ class Auth
         $args = [];
         $args['X-Plex-Product'] = self::$app_name;
         $args['X-Plex-Client-Identifier'] = self::clientId();
-        $args['X-Plex-Token'] = $user_access_token;
         $url = \sprintf('%s?%s', self::PLEXTV_API_TOKEN_VALIDITY, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
-        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url, '', null, ['X-Plex-Token: ' . $user_access_token]);
 
         if ($reply['reply'] === false)
             throw new PlexTvAPIException(\sprintf('HTTP request failed: %s', $reply['error'] ?? 'unknown error'));

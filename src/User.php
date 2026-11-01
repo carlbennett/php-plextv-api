@@ -300,10 +300,9 @@ class User implements IMutable, \JsonSerializable
     public static function getUsers(string $plex_token): array
     {
         $args = [];
-        $args['X-Plex-Token'] = $plex_token;
         $args['X-Plex-Language'] = 'en';
-        $url = sprintf('%s?%s', self::BASEURL_API_USERS, http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
-        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url);
+        $url = \sprintf('%s?%s', self::BASEURL_API_USERS, \http_build_query($args, '', '&', \PHP_QUERY_RFC3986));
+        $reply = HttpRequest::execute(HttpRequest::METHOD_GET, $url, '', null, ['X-Plex-Token: ' . $plex_token]);
 
         if ($reply['reply_http_code'] == 401)
             throw new PlexTvAPIException('access unauthorized, check plex token');
