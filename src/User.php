@@ -12,7 +12,7 @@ class User implements IMutable, \JsonSerializable
 {
     public const BASEURL_API_USERS = 'https://plex.tv/api/users';
 
-    private iterable $_internaldata;
+    private array $_internaldata;
 
     private bool $allowCameraUpload;
     private bool $allowChannels;
@@ -38,10 +38,10 @@ class User implements IMutable, \JsonSerializable
     /**
      * Constructs a Plex user object from serialized Plex user information.
      *
-     * @param iterable $data The serialized (iterable) data containing the Plex user object properties.
+     * @param array $data The serialized data containing the Plex user object properties.
      * @throws PlexTvAPIException if $data is empty.
      */
-    public function __construct(iterable $data)
+    public function __construct(array $data)
     {
         $this->_internaldata = $data;
         $this->allocate();
@@ -54,8 +54,8 @@ class User implements IMutable, \JsonSerializable
      */
     public function allocate(): void
     {
-        $data = &$this->_internaldata;
-        if (empty($data) || !\is_iterable($data))
+        $data = $this->_internaldata;
+        if (empty($data))
             throw new PlexTvAPIException('empty array cannot be deserialized into object');
 
         $this->allowCameraUpload = $data['allowCameraUpload'] ? true : false;
