@@ -99,4 +99,15 @@ class UserTest extends TestCase
         $this->transport->queue(200, 'application/xml', self::fixture('users.xml'));
         $this->assertCount(2, User::getUsers('secret-token'));
     }
+
+    public function testGetUsersKeepsUsersWithoutServers(): void
+    {
+        $this->transport->queue(200, 'application/xml', self::fixture('users-without-servers.xml'));
+        $users = User::getUsers('secret-token');
+
+        $this->assertSame([1001, 1002, 1003], \array_map(fn (User $user) => $user->getId(), $users));
+        $this->assertSame([], $users[0]->getServers());
+        $this->assertCount(1, $users[1]->getServers(), 'a Server outside any User must not be attached to the previous user');
+        $this->assertSame([], $users[2]->getServers());
+    }
 }

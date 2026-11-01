@@ -350,6 +350,13 @@ class User implements IMutable, \JsonSerializable
                         'title' => $xml->getAttribute('title'),
                         'username' => $xml->getAttribute('username'),
                     ];
+
+                    if ($xml->isEmptyElement)
+                    {
+                        // <User .../> has no servers, and XMLReader emits no END_ELEMENT for it
+                        $users[] = new self($current_user);
+                        $current_user = null;
+                    }
                 }
                 else if ($xml->nodeType === XMLReader::ELEMENT && $xml->name == 'Server' && $current_user)
                 {
@@ -369,6 +376,7 @@ class User implements IMutable, \JsonSerializable
                 {
                     $current_user['servers'] = $servers;
                     $users[] = new self($current_user);
+                    $current_user = null;
                 }
             }
 
