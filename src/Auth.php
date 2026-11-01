@@ -15,6 +15,12 @@ class Auth
     public static string $app_name = 'php-plextv-api';
     public static string $forward_url_endpoint = '/plex/auth';
 
+    /**
+     * The scheme and host to return users to after Plex.tv authentication, such as "https://example.com". When null,
+     * getForwardUrl() uses the current request, which trusts the client-supplied Host header; set this in production.
+     */
+    public static ?string $forward_url_base = null;
+
     private function __construct() {}
 
     /**
@@ -73,19 +79,27 @@ class Auth
     /**
      * Generates the url to send the user back to us after Plex.tv authentication.
      *
+     * Uses Auth::$forward_url_base if set, otherwise the scheme and host of the current request.
+     *
      * @return string The fully qualified url at our host.
+     * @throws PlexTvAPIException if no host is configured and the current request has none.
      */
     public static function getForwardUrl(): string
     {
-        return \sprintf(
-            '%s://%s%s',
-            \getenv('HTTPS') ? 'https' : 'http',
-            \getenv('HTTP_HOST') ?? \getenv('SERVER_NAME'),
-            (
-                \substr(self::$forward_url_endpoint, 0, 1) === '/' ?
-                self::$forward_url_endpoint : '/' . self::$forward_url_endpoint
-            )
-        );
+        $endpoint = \str_starts_with(self::$forward_url_endpoint, '/') ? self::$forward_url_endpoint : '/' . self::$forward_url_endpoint;
+
+        if (self::$forward_url_base !== null)
+            return \rtrim(self::$forward_url_base, '/') . $endpoint;
+
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if ($host === '') $host = $_SERVER['SERVER_NAME'] ?? '';
+        if ($host === '')
+            throw new PlexTvAPIException('cannot determine our host, set Auth::$forward_url_base');
+
+        $https = \strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+        $scheme = ($https !== '' && $https !== 'off') ? 'https' : 'http';
+
+        return \sprintf('%s://%s%s', $scheme, $host, $endpoint);
     }
 
     /**

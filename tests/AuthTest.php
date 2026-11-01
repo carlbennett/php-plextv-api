@@ -10,10 +10,13 @@ use \PHPUnit\Framework\TestCase;
 class AuthTest extends TestCase
 {
     private FakeTransport $transport;
+    private array $server;
 
     protected function setUp(): void
     {
         Auth::$client_id = 'test-client-id';
+        $this->server = $_SERVER;
+        unset($_SERVER['HTTPS'], $_SERVER['HTTP_HOST'], $_SERVER['SERVER_NAME']);
         $this->transport = FakeTransport::install();
     }
 
@@ -21,6 +24,9 @@ class AuthTest extends TestCase
     {
         FakeTransport::uninstall();
         Auth::$client_id = null;
+        Auth::$forward_url_base = null;
+        Auth::$forward_url_endpoint = '/plex/auth';
+        $_SERVER = $this->server;
     }
 
     public function testRequestsWithoutClientIdThrow(): void
@@ -52,5 +58,37 @@ class AuthTest extends TestCase
             . '&context%5Bdevice%5D%5Bproduct%5D=My%20App',
             $url
         );
+    }
+
+    public static function forwardUrlProvider(): array
+    {
+        return [
+            'http' => [['HTTP_HOST' => 'example.com'], 'http://example.com/plex/auth'],
+            'https' => [['HTTP_HOST' => 'example.com', 'HTTPS' => 'on'], 'https://example.com/plex/auth'],
+            'HTTPS=off' => [['HTTP_HOST' => 'example.com', 'HTTPS' => 'off'], 'http://example.com/plex/auth'],
+            'SERVER_NAME fallback' => [['SERVER_NAME' => 'fallback.example'], 'http://fallback.example/plex/auth'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('forwardUrlProvider')]
+    public function testGetForwardUrlFromRequest(array $server, string $expected): void
+    {
+        $_SERVER = $server + $_SERVER;
+        $this->assertSame($expected, Auth::getForwardUrl());
+    }
+
+    public function testGetForwardUrlPrefersConfiguredBase(): void
+    {
+        $_SERVER['HTTP_HOST'] = 'attacker.example';
+        Auth::$forward_url_base = 'https://example.com/';
+        Auth::$forward_url_endpoint = 'return';
+
+        $this->assertSame('https://example.com/return', Auth::getForwardUrl());
+    }
+
+    public function testGetForwardUrlWithoutHostThrows(): void
+    {
+        $this->expectException(PlexTvAPIException::class);
+        Auth::getForwardUrl();
     }
 }
