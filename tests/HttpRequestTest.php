@@ -93,6 +93,14 @@ class HttpRequestTest extends TestCase
         $this->assertSame(['a' => '1'], $echo['post']);
     }
 
+    public function testDefaultHeadersIdentifyTheLibrary(): void
+    {
+        $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/echo')));
+
+        $this->assertStringStartsWith('php-plextv-api', $echo['headers']['User-Agent']);
+        $this->assertArrayNotHasKey('Range', $echo['headers']);
+    }
+
     public function testExtraHeadersAreSent(): void
     {
         $echo = $this->echo(HttpRequest::execute(HttpRequest::METHOD_GET, self::$server->url('/echo'), '', null, ['X-Test: yes']));

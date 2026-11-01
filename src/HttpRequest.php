@@ -16,7 +16,7 @@ class HttpRequest
     public static int $max_redirects = 10;
     public static string $redirect_protocols = 'https'; // comma-separated, see CURLOPT_REDIR_PROTOCOLS_STR
     public static int $timeout = 30; // seconds for the whole transfer, including connecting and redirects
-    public static string $user_agent = 'Mozilla/5.0 (X11; Linux; rv:98.0) Gecko/20100101 Firefox/98.0';
+    public static string $user_agent = 'php-plextv-api (+https://github.com/carlbennett/php-plextv-api)';
 
     /**
      * Replaces the curl transport when set. It receives the same arguments as execute() and must return the same
@@ -32,7 +32,7 @@ class HttpRequest
     /**
      * Executes an HTTP request and returns the reply from the server. Uses Curl.
      *
-     * Initial headers include "Accept", "Range", and "User-Agent". The User-agent can be customized by changing HttpRequest::$user_agent.
+     * Initial headers include "Accept" and "User-Agent". The User-agent can be customized by changing HttpRequest::$user_agent.
      *
      * @param string $method The HTTP request method (e.g. HttpRequest::METHOD_GET).
      * @param string $url The URL to request.
@@ -73,7 +73,6 @@ class HttpRequest
             'Cache-Control: no-cache',
             'Connection: close',
             'Pragma: no-cache',
-            'Range: bytes=0-104857600', // 0-100 MiB (1024 * 1024 * 100 bytes)
             \sprintf('User-Agent: %s', self::$user_agent),
         ];
         $headers = \array_merge($init_headers, $extra_headers);
