@@ -4,6 +4,10 @@ namespace CarlBennett\PlexTvAPI;
 
 use \CarlBennett\PlexTvAPI\Exceptions\PlexTvAPIException;
 
+/**
+ * @phpstan-type Reply array{sent_headers: list<string>, reply: string|false, error: string, url: string, reply_http_code: int, reply_mime_type: ?string}
+ * @phpstan-type SuccessReply array{sent_headers: list<string>, reply: non-empty-string, error: string, url: string, reply_http_code: int, reply_mime_type: string}
+ */
 class HttpRequest
 {
     public const METHOD_DELETE = 'DELETE';
@@ -16,13 +20,16 @@ class HttpRequest
 
     public static int $connect_timeout = 3;
     public static int $max_redirects = 10;
-    public static string $redirect_protocols = 'https'; // comma-separated, see CURLOPT_REDIR_PROTOCOLS_STR
+    /** @var non-empty-string Comma-separated protocols that redirects may use, see CURLOPT_REDIR_PROTOCOLS_STR. */
+    public static string $redirect_protocols = 'https';
     public static int $timeout = 30; // seconds for the whole transfer, including connecting and redirects
     public static string $user_agent = 'php-plextv-api (+https://github.com/carlbennett/php-plextv-api)';
 
     /**
      * Replaces the curl transport when set. It receives the same arguments as execute() and must return the same
      * array shape. Intended for tests; leave null in production.
+     *
+     * @var (\Closure(string, string, string, ?array<string, mixed>, list<string>): Reply)|null
      */
     public static ?\Closure $handler = null;
 
@@ -39,13 +46,16 @@ class HttpRequest
      * @param string $method The HTTP request method (e.g. HttpRequest::METHOD_GET).
      * @param string $url The URL to request.
      * @param string $form_mime_type The MIME-type of the $form parameter, sent in the "Content-Type" HTTP request header.
-     * @param ?array $form The key-value pairs of form fields as an array, can be empty or null to disable form.
-     * @param ?array $extra_headers The key-value pairs of extra HTTP headers, to be merged with initial headers.
-     * @return array An array containing the HTTP reply information.
-     * @throws \InvalidArgumentException if a header value contains CR, LF, or NUL characters.
+     * @param ?array<string, mixed> $form The key-value pairs of form fields as an array, can be empty or null to disable form.
+     * @param list<string> $extra_headers Extra HTTP headers as "Name: value" strings, appended to the initial headers.
+     * @return Reply An array containing the HTTP reply information.
+     * @throws \InvalidArgumentException if the method or URL is empty, or a header value contains CR, LF, or NUL characters.
      */
     public static function execute(string $method, string $url, string $form_mime_type = '', ?array $form = null, array $extra_headers = []): array
     {
+        if ($method === '' || $url === '')
+            throw new \InvalidArgumentException('HTTP method and URL must not be empty');
+
         foreach (\array_merge([$form_mime_type, self::$user_agent], $extra_headers) as $value)
         {
             if (\strpbrk($value, "\r\n\0") !== false)
@@ -108,11 +118,13 @@ class HttpRequest
 
         $return = [];
         $return['sent_headers'] = $headers;
-        $return['reply'] = \curl_exec($curl);
+        $reply = \curl_exec($curl);
+        $return['reply'] = \is_string($reply) ? $reply : false;
         $return['error'] = $return['reply'] === false ? \curl_error($curl) : '';
         $return['url'] = \curl_getinfo($curl, \CURLINFO_EFFECTIVE_URL);
         $return['reply_http_code'] = \curl_getinfo($curl, \CURLINFO_RESPONSE_CODE);
-        $return['reply_mime_type'] = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE);
+        $mime_type = \curl_getinfo($curl, \CURLINFO_CONTENT_TYPE); // false, not null, when the transfer failed
+        $return['reply_mime_type'] = \is_string($mime_type) ? $mime_type : null;
 
         return $return;
     }
@@ -120,16 +132,17 @@ class HttpRequest
     /**
      * Checks that a reply from execute() succeeded with a non-empty body of the expected MIME-type.
      *
-     * @param array $reply The array returned by execute().
+     * @param Reply $reply The array returned by execute().
      * @param string $mime_type The expected MIME-type, such as "application/json".
-     * @param array $http_codes The HTTP response codes that count as success.
+     * @param list<int> $http_codes The HTTP response codes that count as success.
      * @return string The charset given in the Content-Type header, or an empty string if none.
      * @throws PlexTvAPIException if the request failed or the reply is not what was expected.
+     * @phpstan-assert SuccessReply $reply
      */
     public static function expectReply(array $reply, string $mime_type, array $http_codes = [200]): string
     {
         if ($reply['reply'] === false)
-            throw new PlexTvAPIException(\sprintf('HTTP request failed: %s', $reply['error'] ?? 'unknown error'));
+            throw new PlexTvAPIException(\sprintf('HTTP request failed: %s', $reply['error'] !== '' ? $reply['error'] : 'unknown error'));
 
         if (!\in_array($reply['reply_http_code'], $http_codes, true))
             throw new PlexTvAPIException(\sprintf('unexpected HTTP response code: %d', $reply['reply_http_code']));

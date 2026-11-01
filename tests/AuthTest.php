@@ -10,6 +10,7 @@ use \PHPUnit\Framework\TestCase;
 class AuthTest extends TestCase
 {
     private FakeTransport $transport;
+    /** @var array<string, mixed> */
     private array $server;
 
     protected function setUp(): void
@@ -60,6 +61,9 @@ class AuthTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array{array<string, string>, string}>
+     */
     public static function forwardUrlProvider(): array
     {
         return [
@@ -70,6 +74,9 @@ class AuthTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<string, string> $server
+     */
     #[\PHPUnit\Framework\Attributes\DataProvider('forwardUrlProvider')]
     public function testGetForwardUrlFromRequest(array $server, string $expected): void
     {
@@ -92,6 +99,9 @@ class AuthTest extends TestCase
         Auth::getForwardUrl();
     }
 
+    /**
+     * @return array<string, array{int}>
+     */
     public static function pinReplyCodeProvider(): array
     {
         return ['200 OK' => [200], '201 Created' => [201]];
@@ -117,6 +127,14 @@ class AuthTest extends TestCase
         Auth::generatePINCode();
     }
 
+    public function testGeneratePINCodeWithNonNumericIdThrows(): void
+    {
+        $this->transport->queue(201, 'application/json', '{"id":"1234","code":"abcd"}');
+        $this->expectException(PlexTvAPIException::class);
+        $this->expectExceptionMessage('missing its id or code');
+        Auth::generatePINCode();
+    }
+
     public function testGeneratePINCodeWithInvalidJsonThrows(): void
     {
         $this->transport->queue(201, 'application/json', '{"id":');
@@ -125,6 +143,9 @@ class AuthTest extends TestCase
         Auth::generatePINCode();
     }
 
+    /**
+     * @return array<string, array{int, bool}>
+     */
     public static function tokenReplyProvider(): array
     {
         return ['valid' => [200, true], 'invalid' => [401, false]];
@@ -149,6 +170,9 @@ class AuthTest extends TestCase
         Auth::verifyUserAccessToken('secret-token');
     }
 
+    /**
+     * @return array<string, array{string, ?string}>
+     */
     public static function pinTokenProvider(): array
     {
         return [
