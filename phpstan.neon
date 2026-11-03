@@ -1,6 +1,6 @@
 parameters:
     level: 8
-    phpVersion: 80300 # the minimum in composer.json
+    phpVersion: 80400 # the minimum in composer.json
     paths:
         - src
         - tests

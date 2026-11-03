@@ -4,7 +4,7 @@ API service.
 
 ## Requirements
 
-- PHP 8.3 or newer (64-bit)
+- PHP 8.4 or newer (64-bit)
 - The `curl` and `xmlreader` PHP extensions
 
 ## Install
@@ -48,8 +48,8 @@ lib/bin/phpunit --testdox
 lib/bin/phpstan analyse
 ```
 
-CI runs the linter and tests on every supported PHP version (8.3 to 8.5), and
-PHPStan at level 8, which checks the code against PHP 8.3. The linter fails on
+CI runs the linter and tests on every supported PHP version (8.4 and 8.5), and
+PHPStan at level 8, which checks the code against PHP 8.4. The linter fails on
 deprecations as well as syntax errors. The linter and tests also run on nightly
 PHP 8.6 and 8.7 builds as an early warning; those jobs may fail without failing
 the run.
