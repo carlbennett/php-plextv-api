@@ -44,8 +44,14 @@ jobs:
       - name: Install composer/vendor dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Validate PHP syntax
-        run: bash -c 'set -e;for file in $(find ./src ./tests -type f -regex ".*\.\(php\|phtml\)" -print); do php -e -l -f "$file"; done'
+      # Report every error level, so this fails on compile-time deprecations too.
+      - name: Validate PHP syntax and deprecations
+        run: |
+          for file in $(find ./src ./tests -type f -regex ".*\.\(php\|phtml\)" -print); do
+            out="$(php -d error_reporting=-1 -d display_errors=stderr -d log_errors=0 -l -f "$file" 2>&1)" || { echo "$out"; exit 1; }
+            echo "$out"
+            if grep -q '^Deprecated:' <<< "$out"; then exit 1; fi
+          done
 
   phpstan:
     needs: [linter]
